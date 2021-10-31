@@ -10,47 +10,66 @@ import numpy
 import string
 import random
 import argparse
-import tflite_runtime.interpreter as tf
+#import tflite_runtime.interpreter as tf
+import tensorflow as tf
 
 def decode(characters, y):
     y = numpy.argmax(numpy.array(y), axis=2)[:,0]
     return ''.join([characters[x] for x in y])
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model-name', help='Model name to use for classification', type=str)
+    parser.add_argument('--captcha-dir', help='Where to read the captchas to break', type=str)
+    parser.add_argument('--output', help='File where the classifications should be saved', type=str)
+    parser.add_argument('--symbols', help='File with the symbols to use in captchas', type=str)
+    args = parser.parse_args()
 
-model_name="model1"
-captcha_dir="test_Images_Shriya"
-output="test.csv"
-symbols="symbolTrain2.txt"
+    if args.model_name is None:
+        print("Please specify the CNN model to use")
+        exit(1)
 
-symbols_file = open(symbols, 'r')
-captcha_symbols = symbols_file.readline().strip()
-symbols_file.close()
+    if args.captcha_dir is None:
+        print("Please specify the directory with captchas to break")
+        exit(1)
 
-print("Classifying captchas with symbol set {" + captcha_symbols + "}")
+    if args.output is None:
+        print("Please specify the path to the output file")
+        exit(1)
 
+    if args.symbols is None:
+        print("Please specify the captcha symbols file")
+        exit(1)
+    
+    symbols_file = open(args.symbols, 'r')
+    captcha_symbols = symbols_file.readline().strip()
+    symbols_file.close()
+    
+    print("Classifying captchas with symbol set {" + captcha_symbols + "}")
+    
+    
+    with open(args.output, 'w') as output_file:
+        model = tf.lite.Interpreter(model_path=args.model_name + ".tflite")
+        model.allocate_tensors()
+        input_details = model.get_input_details()
+        output_details = model.get_output_details()
+    
+        for x in os.listdir(args.captcha_dir):
+            # load image and preprocess it
+            raw_data = cv2.imread(os.path.join(args.captcha_dir, x))
+            rgb_data = cv2.cvtColor(raw_data, cv2.COLOR_BGR2RGB)
+            image = numpy.array(rgb_data, dtype=numpy.float32) / 255.0
+            (c, h, w) = image.shape
+            image = image.reshape([-1, c, h, w])
+            model.set_tensor(input_details[0]['index'], image)
+            model.invoke()
+            output_data = []
+            for i in range(6):
+                output_data.append(model.get_tensor(output_details[i]['index']))
+            output_data = numpy.array(output_data, dtype=numpy.float32)
+            output_file.write(x + "," + decode(captcha_symbols, output_data) + "\n")
+    
+            print('Classified ' + x)
 
-with open(output, 'w') as output_file:
-    model = tf.Interpreter(model_path="converted_model2.tflite")
-    model.allocate_tensors()
-    input_details = model.get_input_details()
-    output_details = model.get_output_details()
-
-    for x in os.listdir(captcha_dir):
-        # load image and preprocess it
-        raw_data = cv2.imread(os.path.join(captcha_dir, x))
-        rgb_data = cv2.cvtColor(raw_data, cv2.COLOR_BGR2RGB)
-        image = numpy.array(rgb_data, dtype=numpy.float32) / 255.0
-        (c, h, w) = image.shape
-        image = image.reshape([-1, c, h, w])
-        model.set_tensor(input_details[0]['index'], image)
-        model.invoke()
-        output_data = []
-        for i in range(6):
-            output_data.append(model.get_tensor(output_details[i]['index']))
-        output_data = numpy.array(output_data, dtype=numpy.float32)
-        output_file.write(x + ", " + decode(captcha_symbols, output_data) + "\n")
-
-        print('Classified ' + x)
-
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
