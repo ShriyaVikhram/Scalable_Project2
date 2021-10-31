@@ -18,7 +18,7 @@ def decode(characters, y):
 
 
 model_name="model1"
-captcha_dir="test_Images_Shriya"
+captcha_dir="test_Images"
 output="test.csv"
 symbols="symbolTrain2.txt"
 
@@ -30,7 +30,7 @@ print("Classifying captchas with symbol set {" + captcha_symbols + "}")
 
 
 with open(output, 'w') as output_file:
-    model = tf.lite.Interpreter(model_path="converted_model.tflite")
+    model = tf.Interpreter(model_path="converted_model.tflite")
     model.allocate_tensors()
     input_details = model.get_input_details()
     output_details = model.get_output_details()
