@@ -10,7 +10,7 @@ import numpy
 import string
 import random
 import argparse
-import tflite_runtime.interpreter as tf
+import tensorflow as tf
 
 def decode(characters, y):
     y = numpy.argmax(numpy.array(y), axis=2)[:,0]
@@ -30,7 +30,7 @@ print("Classifying captchas with symbol set {" + captcha_symbols + "}")
 
 
 with open(output, 'w') as output_file:
-    model = tf.Interpreter(model_path="converted_model.tflite")
+    model = tf.lite.Interpreter(model_path="converted_model2.tflite")
     model.allocate_tensors()
     input_details = model.get_input_details()
     output_details = model.get_output_details()
