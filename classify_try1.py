@@ -18,7 +18,7 @@ def decode(characters, y):
 
 
 model_name="model1"
-captcha_dir="test_Images_Shriya"
+captcha_dir="test_Images"
 output="test.csv"
 symbols="symbolTrain2.txt"
 
