@@ -10,8 +10,8 @@ import numpy
 import string
 import random
 import argparse
-#import tflite_runtime.interpreter as tf
-import tensorflow as tf
+import tflite_runtime.interpreter as tf
+#import tensorflow as tf
 
 def decode(characters, y):
     y = numpy.argmax(numpy.array(y), axis=2)[:,0]
@@ -49,7 +49,7 @@ def main():
     
     
     with open(args.output, 'w') as output_file:
-        model = tf.lite.Interpreter(model_path=args.model_name + ".tflite")
+        model = tf.Interpreter(model_path=args.model_name + ".tflite")
         model.allocate_tensors()
         input_details = model.get_input_details()
         output_details = model.get_output_details()
